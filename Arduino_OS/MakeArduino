@@ -1,0 +1,79 @@
+# Configuration
+MCU = atmega328p
+F_CPU = 16000000UL
+PROGRAMMER = arduino
+BAUD = 115200
+PORT = /dev/ttyACM0
+OUTPUT = build/output/output
+LINKER_SCRIPT = linker/linker.ld
+
+# Folders (project envienvironment)
+SRC_DIR_C = src
+SRC_DIR_S = asm
+OBJ_DIR = build/obj
+OUTPUT_DIR = build/output
+
+
+# Collect all the .c and .s files
+SRC_C = $(wildcard $(SRC_DIR_C)/*.c)
+SRC_S = $(wildcard $(SRC_DIR_S)/*.s)
+
+
+
+# Create a list of object files of the .c and .s files in the project
+OBJ = $(patsubst $(SRC_DIR_C)/%.c, $(OBJ_DIR)/%.o, $(SRC_C)) \
+      $(patsubst $(SRC_DIR_S)/%.s, $(OBJ_DIR)/%.o, $(SRC_S))
+
+
+# Tools AVR
+CC = avr-gcc
+OBJCOPY = avr-objcopy
+AVRDUDE = avrdude
+
+# Compiling and Linking options
+CFLAGS = -mmcu=$(MCU) -DF_CPU=$(F_CPU) -Wall
+LDFLAGS = -mmcu=$(MCU) -T $(LINKER_SCRIPT) -nostartfiles
+
+
+# Rules
+all: $(OUTPUT).hex
+
+
+
+# File .c compilation
+$(OBJ_DIR)/%.o: $(SRC_DIR_C)/%.c
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+
+
+# File .s compilation
+$(OBJ_DIR)/%.o: $(SRC_DIR_S)/%.s
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+
+
+# .elf file creation
+$(OUTPUT).elf: $(OBJ)
+	mkdir -p $(OUTPUT_DIR)
+	$(CC) $(LDFLAGS) $^ -o $@
+
+
+
+# .hex file creation
+$(OUTPUT).hex: $(OUTPUT).elf
+	$(OBJCOPY) -O ihex -R .eeprom $< $@
+
+
+
+# Flashing
+upload: $(OUTPUT).hex
+	$(AVRDUDE) -p $(MCU) -c $(PROGRAMMER) -P $(PORT) -b $(BAUD) -U flash:w:$<:i
+
+# Removing (reset)
+clean:
+	rm -rf $(OBJ_DIR) $(OUTPUT_DIR)
+
+.PHONY: all upload clean
+
