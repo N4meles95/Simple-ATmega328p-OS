@@ -1,7 +1,6 @@
 ;All the simbols are specified on the linker script
 
 .section .startup, "ax", @progbits
-
 .global _start
 .extern main
 
