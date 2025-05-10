@@ -67,11 +67,12 @@ context_switch:
     jmp switching_task1
 
 
+;function used for switching from task0 to OS
 switching_task0:
     ldi r29, 1
     sts FLAG_SWITCH_TASK, r29
 
-    ;ora salvo le componenti critiche per poi iniziare a salvare i registri generali
+    ;saving critical registers
 
     in r28, 0x3d
     in r29, 0x3e
@@ -85,8 +86,6 @@ switching_task0:
     adiw r28, 1
     sts TABLE_TASK1 + 32, r28
     sts TABLE_TASK1 + 33, r29
-    
-    ;ripristino i registri usati in questa sequenza e nel processo salvo anche SREG
 
     pop r30
     pop r29
@@ -94,7 +93,7 @@ switching_task0:
     sts TABLE_TASK1 + 34, r28 
     pop r28
 
-    ;copia dei registri generali nella tabella
+    ;saving general purpuose registers on the context table 
 
     sts TABLE_TASK1, r0
     sts TABLE_TASK1 + 1, r1
@@ -129,15 +128,15 @@ switching_task0:
     sts TABLE_TASK1 + 30, r30
     sts TABLE_TASK1 + 31, r31
     
-    ;inizio del caricamento del TABLE_OS
-    ;inzio con il caricamento dello stack pointer
+    ;loading of the OS context table
+    ;starting from the SP
 
     lds r28, TABLE_OS + 32
     out 0x3d, r28
     lds r29, TABLE_OS + 33
     out 0x3e, r29
 
-    ;carico il program counter per il reti
+    ;load PC used for RETI
 
     lds r30, TABLE_OS + 35
     lds r31, TABLE_OS + 36
@@ -145,7 +144,7 @@ switching_task0:
     push r30
     push r31
 
-    ;dopo aver fatto questo posso caricare prima SREG e poi tutti i registri generali
+    ;loading general purpuose registers
 
     lds r30, TABLE_OS + 34
     sts 0x005F, r30
@@ -188,11 +187,13 @@ switching_task0:
 
 ;---------------------------------------------------------
 
+
+;function used for switching from OS to task0
 switching_task1:
     clr r29
     sts FLAG_SWITCH_TASK, r29
 
-    ;ora salvo le componenti critiche per poi iniziare a salvare i registri generali
+    ;saving critical registers
 
     in r28, 0x3d
     in r29, 0x3e
@@ -207,16 +208,13 @@ switching_task1:
     sts TABLE_OS + 32, r28
     sts TABLE_OS + 33, r29
 
-    
-    ;ripristino i registri usati in questa sequenza e nel processo salvo anche SREG
-
     pop r30
     pop r29
     pop r28
     sts TABLE_OS + 34, r28 
     pop r28
 
-    ;copia dei registri generali nella tabella
+    ;saving general purpuose registers on the context table 
 
     sts TABLE_OS, r0
     sts TABLE_OS + 1, r1
@@ -251,15 +249,15 @@ switching_task1:
     sts TABLE_OS + 30, r30
     sts TABLE_OS + 31, r31
     
-    ;inizio del caricamento del TABLE_TASK1
-    ;inzio con il caricamento dello stack pointer
+    ;start to load TABLE_TASK1
+    ;loading SP
 
     lds r28, TABLE_TASK1 + 32
     out 0x3d, r28
     lds r29, TABLE_TASK1 + 33
     out 0x3e, r29
 
-    ;carico il program counter per il reti
+    ;load PC used from RETI
 
     lds r30, TABLE_TASK1 + 35
     lds r31, TABLE_TASK1 + 36
@@ -267,7 +265,7 @@ switching_task1:
     push r30
     push r31
 
-    ;dopo aver fatto questo posso caricare prima SREG e poi tutti i registri generali
+    ;loading general purpuose registers
 
     lds r30, TABLE_TASK1 + 34
     sts 0x005F, r30
